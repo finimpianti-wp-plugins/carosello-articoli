@@ -2,7 +2,8 @@
 /**
  * Plugin Name:       Carosello Articoli
  * Description:       Carosello di articoli filtrati per tag, da inserire nelle pagine con lo shortcode [carosello_articoli]. Impostazioni in Bacheca → Carosello Articoli.
- * Version:           1.1.1
+ * Version:           1.2.0
+ * Domain Path:       /languages
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Update URI:        false
@@ -12,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'CDA_VERSION', '1.1.1' );
+define( 'CDA_VERSION', '1.2.0' );
 define( 'CDA_URL', plugin_dir_url( __FILE__ ) );
 define( 'CDA_OPTION', 'cda_impostazioni' );
 define( 'CDA_SHORTCODE', 'carosello_articoli' );
@@ -85,6 +86,7 @@ function cda_fields() {
 				'pausa_hover' => array( 'type' => 'bool', 'label' => 'Metti in pausa al passaggio del mouse', 'default' => 1 ),
 			),
 		),
+		'lingue'      => cda_campi_lingue(),
 		'colori'      => array(
 			'title'  => 'Colori',
 			'fields' => array(
@@ -98,6 +100,50 @@ function cda_fields() {
 		),
 	);
 }
+
+/**
+ * Impostazioni per lingua (solo con "Elementor Page Translator" attivo).
+ * - Tag di lingua: si combina con il tag degli articoli (devono averli entrambi).
+ *   Vuoto = nessun filtro per lingua. Mettere lo stesso tag (es. "lingua-en") in
+ *   tutte le lingue mostra gli stessi articoli ovunque.
+ * - Testo del link nelle altre lingue: vuoto = "Scopri di più" tradotto (Loco Translate).
+ */
+function cda_campi_lingue() {
+	$campi = array();
+	if ( function_exists( 'ept_languages' ) && function_exists( 'ept_default_language' ) ) {
+		foreach ( ept_languages() as $codice => $lingua ) {
+			$campi[ 'tag_lingua__' . $codice ] = array(
+				'type'    => 'tag',
+				'label'   => 'Tag di lingua – ' . $lingua['name'],
+				'default' => '',
+				'lingua'  => true,
+				'desc'    => 'Sulle pagine in ' . $lingua['name'] . ' vengono mostrati solo gli articoli che hanno anche questo tag (es. "lingua-' . $codice . '"). Vuoto = nessun filtro per lingua.',
+			);
+			if ( ept_default_language() !== $codice ) {
+				$campi[ 'testo_link__' . $codice ] = array(
+					'type'    => 'text',
+					'label'   => 'Testo del link – ' . $lingua['name'],
+					'default' => '',
+					'lingua'  => true,
+					'desc'    => 'Vuoto = "Scopri di più" tradotto (Loco Translate).',
+				);
+			}
+		}
+	}
+	return array(
+		'title'  => 'Lingue',
+		'fields' => $campi,
+	);
+}
+
+/** Lingua della pagina corrente ('' senza "Elementor Page Translator"). */
+function cda_lingua_corrente() {
+	return function_exists( 'ept_current_language' ) ? (string) ept_current_language() : '';
+}
+
+add_action( 'init', function () {
+	load_plugin_textdomain( 'carosello-articoli', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+} );
 
 /** Campi in forma piatta: chiave => definizione. */
 function cda_flat_fields() {
@@ -154,6 +200,13 @@ function cda_sanitize( $input ) {
 			$clean[ $key ] = cda_sanitize_value( $field, isset( $input[ $key ] ) ? $input[ $key ] : $field['default'] );
 		}
 	}
+	// Impostazioni per lingua salvate quando il traduttore era attivo: restano.
+	$saved = get_option( CDA_OPTION, array() );
+	foreach ( is_array( $saved ) ? $saved : array() as $key => $value ) {
+		if ( ! isset( $clean[ $key ] ) && preg_match( '/^(tag_lingua|testo_link)__[a-z0-9-]+$/', (string) $key ) ) {
+			$clean[ $key ] = $value;
+		}
+	}
 	return $clean;
 }
 
@@ -173,6 +226,9 @@ add_action( 'admin_init', function () {
 	) );
 
 	foreach ( cda_fields() as $section_id => $section ) {
+		if ( ! $section['fields'] ) {
+			continue;
+		}
 		add_settings_section( 'cda_' . $section_id, $section['title'], '__return_false', 'carosello-articoli' );
 		foreach ( $section['fields'] as $key => $field ) {
 			add_settings_field( 'cda_' . $key, $field['label'], 'cda_render_field', 'carosello-articoli', 'cda_' . $section_id, array(
@@ -281,6 +337,11 @@ function cda_render_admin_page() {
 					<thead><tr><th>Attributo</th><th>Impostazione</th><th>Valori</th></tr></thead>
 					<tbody>
 					<?php foreach ( cda_flat_fields() as $key => $field ) : ?>
+						<?php
+						if ( ! empty( $field['lingua'] ) ) {
+							continue;
+						}
+						?>
 						<tr>
 							<td><code><?php echo esc_html( $key ); ?></code></td>
 							<td><?php echo esc_html( $field['label'] ); ?></td>
@@ -391,20 +452,40 @@ function cda_shortcode( $atts ) {
 		'ignore_sticky_posts' => true,
 		'no_found_rows'       => true,
 	);
+	$tax = array();
 	if ( '' !== $o['tag'] ) {
-		$query['tax_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery
-			array(
-				'taxonomy' => 'post_tag',
-				'field'    => 'slug',
-				'terms'    => explode( ',', $o['tag'] ),
-			),
+		$tax[] = array(
+			'taxonomy' => 'post_tag',
+			'field'    => 'slug',
+			'terms'    => explode( ',', $o['tag'] ),
 		);
+	}
+	// Lingua della pagina: anche il tag di lingua (con "Elementor Page Translator").
+	$lingua     = cda_lingua_corrente();
+	$tag_lingua = '' !== $lingua ? (string) ( $o[ 'tag_lingua__' . $lingua ] ?? '' ) : '';
+	if ( '' !== $tag_lingua ) {
+		$tax[] = array(
+			'taxonomy' => 'post_tag',
+			'field'    => 'slug',
+			'terms'    => explode( ',', $tag_lingua ),
+		);
+	}
+	if ( $tax ) {
+		$query['tax_query'] = array_merge( array( 'relation' => 'AND' ), $tax ); // phpcs:ignore WordPress.DB.SlowDBQuery
+	}
+	// Testo del link nelle altre lingue.
+	if ( '' !== $lingua && function_exists( 'ept_default_language' ) && ept_default_language() !== $lingua && '' !== $o['testo_link'] ) {
+		$proprio         = trim( (string) ( $o[ 'testo_link__' . $lingua ] ?? '' ) );
+		$o['testo_link'] = '' !== $proprio ? $proprio : __( 'Scopri di più', 'carosello-articoli' );
 	}
 	$posts = get_posts( $query );
 
 	if ( ! $posts ) {
 		return current_user_can( 'edit_posts' )
-			? '<p class="cda-vuoto">Carosello Articoli: nessun articolo trovato' . ( $o['tag'] ? ' con il tag "' . esc_html( $o['tag'] ) . '"' : '' ) . '. (Messaggio visibile solo agli amministratori.)</p>'
+			? '<p class="cda-vuoto">' . esc_html( $o['tag']
+				/* translators: %s: tag slug. */
+				? sprintf( __( 'Carosello Articoli: nessun articolo trovato con il tag "%s". (Messaggio visibile solo agli amministratori.)', 'carosello-articoli' ), $o['tag'] )
+				: __( 'Carosello Articoli: nessun articolo trovato. (Messaggio visibile solo agli amministratori.)', 'carosello-articoli' ) ) . '</p>'
 			: '';
 	}
 
@@ -425,6 +506,8 @@ function cda_shortcode( $atts ) {
 		'interval'   => $o['intervallo'],
 		'speed'      => $o['velocita'],
 		'pauseHover' => (bool) $o['pausa_hover'],
+		/* translators: %d: number of the article. */
+		'goTo'       => __( 'Vai all\'articolo %d', 'carosello-articoli' ),
 	);
 
 	$style = sprintf(
@@ -453,14 +536,14 @@ function cda_shortcode( $atts ) {
 	if ( $o['frecce'] ) {
 		$chevron = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 		$arrows  = '<div class="cda__arrows">'
-			. '<button type="button" class="cda__arrow cda__arrow--prev" aria-label="Articolo precedente">' . $chevron . '</button>'
-			. '<button type="button" class="cda__arrow cda__arrow--next" aria-label="Articolo successivo">' . $chevron . '</button>'
+			. '<button type="button" class="cda__arrow cda__arrow--prev" aria-label="' . esc_attr__( 'Articolo precedente', 'carosello-articoli' ) . '">' . $chevron . '</button>'
+			. '<button type="button" class="cda__arrow cda__arrow--next" aria-label="' . esc_attr__( 'Articolo successivo', 'carosello-articoli' ) . '">' . $chevron . '</button>'
 			. '</div>';
 	}
 
 	ob_start();
 	?>
-	<div class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>" style="<?php echo esc_attr( $style ); ?>" data-config="<?php echo esc_attr( wp_json_encode( $config ) ); ?>" role="region" aria-roledescription="carosello" aria-label="Articoli">
+	<div class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>" style="<?php echo esc_attr( $style ); ?>" data-config="<?php echo esc_attr( wp_json_encode( $config ) ); ?>" role="region" aria-roledescription="<?php echo esc_attr__( 'carosello', 'carosello-articoli' ); ?>" aria-label="<?php echo esc_attr__( 'Articoli', 'carosello-articoli' ); ?>">
 		<div class="cda__stage">
 			<div class="cda__viewport">
 				<div class="cda__track">

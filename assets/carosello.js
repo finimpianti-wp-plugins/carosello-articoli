@@ -160,7 +160,7 @@
 				var b = document.createElement('button');
 				b.type = 'button';
 				b.className = 'cda__dot';
-				b.setAttribute('aria-label', 'Vai all\'articolo ' + (k + 1));
+				b.setAttribute('aria-label', (self.cfg.goTo || 'Vai all\'articolo %d').replace('%d', k + 1));
 				b.addEventListener('click', (function (k) {
 					return function () { self.goTo(self.loop ? self.cc + k : k); };
 				})(k));

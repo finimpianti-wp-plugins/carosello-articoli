@@ -1,0 +1,35 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: carosello-articoli\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Domain: carosello-articoli\n"
+
+#: carosello-articoli.php:479
+msgid "Scopri di più"
+msgstr "Find out more"
+
+#. translators: %d: number of the article.
+#: carosello-articoli.php:510
+#, php-format
+msgid "Vai all'articolo %d"
+msgstr "Go to article %d"
+
+#: carosello-articoli.php:539
+msgid "Articolo precedente"
+msgstr "Previous article"
+
+#: carosello-articoli.php:540
+msgid "Articolo successivo"
+msgstr "Next article"
+
+#: carosello-articoli.php:546
+msgid "carosello"
+msgstr "carousel"
+
+#: carosello-articoli.php:546
+msgid "Articoli"
+msgstr "Articles"
