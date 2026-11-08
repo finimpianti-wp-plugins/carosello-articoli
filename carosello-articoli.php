@@ -2,18 +2,18 @@
 /**
  * Plugin Name:       Carosello Articoli
  * Description:       Carosello di articoli filtrati per tag, da inserire nelle pagine con lo shortcode [carosello_articoli]. Impostazioni in Bacheca → Carosello Articoli.
- * Version:           1.2.0
+ * Version:           1.3.0
  * Domain Path:       /languages
  * Requires at least: 5.8
  * Requires PHP:      7.4
- * Update URI:        false
+ * Update URI:        https://github.com/apgr01/carosello-articoli
  * Text Domain:       carosello-articoli
  * License:           GPL-2.0-or-later
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'CDA_VERSION', '1.2.0' );
+define( 'CDA_VERSION', '1.3.0' );
 define( 'CDA_URL', plugin_dir_url( __FILE__ ) );
 define( 'CDA_OPTION', 'cda_impostazioni' );
 define( 'CDA_SHORTCODE', 'carosello_articoli' );
@@ -595,4 +595,18 @@ function cda_shortcode( $atts ) {
 	</div>
 	<?php
 	return ob_get_clean();
+}
+
+// Aggiornamenti da GitHub: ogni release del repository (con lo zip del plugin) compare in
+// Bacheca -> Aggiornamenti e si installa con un clic. Il repository si può cambiare definendo
+// CDA_UPDATE_REPO in wp-config.php; APGR_GITHUB_TOKEN (facoltativo) serve solo per repository
+// privati o per superare i limiti di richieste di GitHub.
+if ( ! defined( 'CDA_UPDATE_REPO' ) ) {
+	define( 'CDA_UPDATE_REPO', 'https://github.com/apgr01/carosello-articoli/' );
+}
+require_once __DIR__ . '/lib/plugin-update-checker/plugin-update-checker.php';
+$cda_aggiornamenti = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker( CDA_UPDATE_REPO, __FILE__, 'carosello-articoli' );
+$cda_aggiornamenti->getVcsApi()->enableReleaseAssets( '/^carosello\-articoli-[0-9][0-9.]*\.zip$/' );
+if ( defined( 'APGR_GITHUB_TOKEN' ) && APGR_GITHUB_TOKEN ) {
+	$cda_aggiornamenti->setAuthentication( APGR_GITHUB_TOKEN );
 }
