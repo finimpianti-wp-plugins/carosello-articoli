@@ -603,3 +603,137 @@
 		transform: none;
 	}
 }
+
+/* -------------------------------------------------------------------------
+ * Nessun articolo: biglietto "nessuna fiera"
+ * ---------------------------------------------------------------------- */
+.cda-biglietto {
+	--cda-dark: #012611;
+	--cda-primary: #06A34A;
+	--cda-light: #ADD9C0;
+	--cda-card: #FFFFFF;
+	--cda-bg: #E5E5E5;
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: clamp(16px, 3vw, 28px);
+	background: var(--cda-bg);
+	border-radius: 16px;
+	color: var(--cda-dark);
+}
+.cda-biglietto *, .cda-biglietto *::before, .cda-biglietto *::after { box-sizing: border-box; }
+.cda-biglietto--alto { min-height: var(--cda-h, 500px); }
+.cda-biglietto__card {
+	display: flex;
+	align-items: stretch;
+	width: 100%;
+	max-width: 780px;
+	background: var(--cda-card);
+	border-radius: 16px;
+	overflow: hidden;
+	box-shadow: 0 10px 30px rgba(1, 38, 17, .08);
+}
+.cda-biglietto__cal {
+	position: relative;
+	flex: 0 0 170px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 14px;
+	padding: 24px 20px;
+	background: var(--cda-dark);
+	text-align: center;
+}
+/* Bordo "strappato" del biglietto: semicerchi del colore della card */
+.cda-biglietto__cal::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: -9px;
+	width: 18px;
+	background: radial-gradient(circle at 9px 11px, var(--cda-card) 6.5px, transparent 7px) 0 0 / 18px 22px repeat-y;
+}
+.cda-biglietto__cal-testo {
+	color: var(--cda-light);
+	font-size: .8rem;
+	font-weight: 600;
+	letter-spacing: .14em;
+	line-height: 1.4;
+	text-transform: uppercase;
+}
+.cda-biglietto__cal-trattino {
+	display: block;
+	width: 52px;
+	height: 6px;
+	border-radius: 3px;
+	background: var(--cda-card);
+	opacity: .9;
+}
+.cda-biglietto__corpo {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 28px 32px 28px 40px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+}
+.cda-biglietto__occhiello {
+	margin: 0 0 6px;
+	color: var(--cda-primary);
+	font-size: .78rem;
+	font-weight: 700;
+	letter-spacing: .06em;
+	text-transform: uppercase;
+}
+.cda-biglietto__titolo {
+	margin: 0 0 8px;
+	color: var(--cda-dark);
+	font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+	font-weight: 700;
+	line-height: 1.25;
+}
+.cda-biglietto__testo {
+	margin: 0 0 16px;
+	color: var(--cda-dark);
+	opacity: .78;
+	line-height: 1.55;
+}
+.cda-biglietto__testo:last-child { margin-bottom: 0; }
+.cda-biglietto__pulsante,
+.cda-biglietto__pulsante:visited {
+	display: inline-flex;
+	align-items: center;
+	padding: 10px 22px;
+	border: 2px solid var(--cda-dark);
+	border-radius: 999px;
+	color: var(--cda-dark);
+	font-weight: 600;
+	line-height: 1.2;
+	text-decoration: none;
+	transition: background .2s, color .2s;
+}
+.cda-biglietto__pulsante:hover,
+.cda-biglietto__pulsante:focus-visible {
+	background: var(--cda-dark);
+	color: var(--cda-card);
+}
+.cda-biglietto__pulsante:focus-visible { outline: 3px solid var(--cda-primary); outline-offset: 2px; }
+
+@media (max-width: 600px) {
+	.cda-biglietto__card { flex-direction: column; }
+	.cda-biglietto__cal { flex: none; flex-direction: row; justify-content: space-between; padding: 18px 22px 22px; }
+	.cda-biglietto__cal::after {
+		top: auto;
+		left: 0;
+		right: 0;
+		bottom: -9px;
+		width: auto;
+		height: 18px;
+		background: radial-gradient(circle at 11px 9px, var(--cda-card) 6.5px, transparent 7px) 0 0 / 22px 18px repeat-x;
+	}
+	.cda-biglietto__corpo { padding: 26px 22px 24px; }
+}

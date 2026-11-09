@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name:       Carosello Articoli
- * Description:       Carosello di articoli filtrati per tag, da inserire nelle pagine con lo shortcode [carosello_articoli]. Impostazioni in Bacheca → Carosello Articoli.
- * Version:           1.3.0
+ * Description:       Carosello di articoli filtrati per tag e categoria, da inserire nelle pagine con lo shortcode [carosello_articoli]. Impostazioni in Bacheca → Carosello Articoli.
+ * Version:           1.4.0
  * Domain Path:       /languages
  * Requires at least: 5.8
  * Requires PHP:      7.4
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'CDA_VERSION', '1.3.0' );
+define( 'CDA_VERSION', '1.4.0' );
 define( 'CDA_URL', plugin_dir_url( __FILE__ ) );
 define( 'CDA_OPTION', 'cda_impostazioni' );
 define( 'CDA_SHORTCODE', 'carosello_articoli' );
@@ -32,6 +32,7 @@ function cda_fields() {
 			'title'  => 'Contenuto',
 			'fields' => array(
 				'tag'          => array( 'type' => 'tag', 'label' => 'Tag degli articoli', 'default' => '', 'desc' => 'Vengono mostrati solo gli articoli con questo tag. Vuoto = tutti. Nello shortcode puoi indicare più tag separati da virgola.' ),
+				'categoria'    => array( 'type' => 'category', 'label' => 'Categoria degli articoli', 'default' => '', 'desc' => 'Vengono mostrati solo gli articoli di questa categoria (comprese le sue sottocategorie). Vuoto = tutte. Con tag e categoria insieme, gli articoli devono avere entrambi. Nello shortcode puoi indicare più categorie separate da virgola (basta che l\'articolo sia in una).' ),
 				'post_type'    => array( 'type' => 'post_type', 'label' => 'Tipo di contenuto', 'default' => 'post' ),
 				'numero'       => array( 'type' => 'int', 'label' => 'Numero massimo di articoli', 'default' => 10, 'min' => 1, 'max' => 50 ),
 				'righe'        => array( 'type' => 'int', 'label' => 'Righe massime della descrizione', 'default' => 3, 'min' => 1, 'max' => 6 ),
@@ -86,6 +87,19 @@ function cda_fields() {
 				'pausa_hover' => array( 'type' => 'bool', 'label' => 'Metti in pausa al passaggio del mouse', 'default' => 1 ),
 			),
 		),
+		'vuoto'       => array(
+			'title'  => 'Nessun articolo da mostrare',
+			'fields' => array(
+				'vuoto_mostra'    => array( 'type' => 'bool', 'label' => 'Mostra il biglietto "nessuna fiera"', 'default' => 1, 'desc' => 'Quando non ci sono articoli da mostrare, al posto del carosello compare un biglietto con un calendario vuoto e i testi qui sotto. Se lo disattivi, non viene mostrato nulla.' ),
+				'vuoto_cal'       => array( 'type' => 'text', 'label' => 'Scritta sul calendario', 'default' => 'Prossima fiera' ),
+				'vuoto_occhiello' => array( 'type' => 'text', 'label' => 'Occhiello', 'default' => 'Calendario fiere', 'desc' => 'La riga piccola colorata sopra il titolo. Vuoto = nessun occhiello.' ),
+				'vuoto_titolo'    => array( 'type' => 'text', 'label' => 'Titolo', 'default' => 'Nessuna fiera in calendario, per ora' ),
+				'vuoto_testo'     => array( 'type' => 'textarea', 'label' => 'Testo', 'default' => 'Appena fissiamo il prossimo appuntamento lo trovi qui. Nel frattempo siamo sempre a disposizione.' ),
+				'vuoto_pulsante'  => array( 'type' => 'text', 'label' => 'Testo del pulsante', 'default' => 'Contattaci' ),
+				'vuoto_link'      => array( 'type' => 'url', 'label' => 'Link del pulsante', 'default' => '', 'desc' => 'Per esempio la pagina dei contatti. Senza link il pulsante non viene mostrato.' ),
+				'vuoto_altezza'   => array( 'type' => 'select', 'label' => 'Altezza', 'default' => 'compatta', 'options' => array( 'compatta' => 'Compatta (quella del biglietto)', 'carosello' => 'Uguale al carosello (la pagina non cambia altezza)' ) ),
+			),
+		),
 		'lingue'      => cda_campi_lingue(),
 		'colori'      => array(
 			'title'  => 'Colori',
@@ -127,12 +141,48 @@ function cda_campi_lingue() {
 					'lingua'  => true,
 					'desc'    => 'Vuoto = "Scopri di più" tradotto (Loco Translate).',
 				);
+				foreach ( cda_campi_vuoto_lingua() as $chiave => $def ) {
+					$campi[ $chiave . '__' . $codice ] = array(
+						'type'    => $def['type'],
+						'label'   => $def['label'] . ' – ' . $lingua['name'],
+						'default' => '',
+						'lingua'  => true,
+						'desc'    => $def['desc'],
+					);
+				}
 			}
 		}
 	}
 	return array(
 		'title'  => 'Lingue',
 		'fields' => $campi,
+	);
+}
+
+/** Testi del biglietto "nessuna fiera" che si possono scrivere per ogni lingua. */
+function cda_campi_vuoto_lingua() {
+	$testo = 'Vuoto = il testo italiano tradotto, se non l\'hai cambiato (altrimenti il testo italiano).';
+	return array(
+		'vuoto_cal'       => array( 'type' => 'text', 'label' => 'Biglietto: scritta sul calendario', 'desc' => $testo ),
+		'vuoto_occhiello' => array( 'type' => 'text', 'label' => 'Biglietto: occhiello', 'desc' => $testo ),
+		'vuoto_titolo'    => array( 'type' => 'text', 'label' => 'Biglietto: titolo', 'desc' => $testo ),
+		'vuoto_testo'     => array( 'type' => 'textarea', 'label' => 'Biglietto: testo', 'desc' => $testo ),
+		'vuoto_pulsante'  => array( 'type' => 'text', 'label' => 'Biglietto: testo del pulsante', 'desc' => $testo ),
+		'vuoto_link'      => array( 'type' => 'url', 'label' => 'Biglietto: link del pulsante', 'desc' => 'Vuoto = il link italiano; se porta a una pagina del sito, la sua traduzione in questa lingua.' ),
+	);
+}
+
+/**
+ * Testi predefiniti del biglietto, tradotti nella lingua della pagina (Loco Translate / file .mo).
+ * Scritti qui per esteso perché gli strumenti di traduzione li trovino.
+ */
+function cda_testi_vuoto_tradotti() {
+	return array(
+		'vuoto_cal'       => __( 'Prossima fiera', 'carosello-articoli' ),
+		'vuoto_occhiello' => __( 'Calendario fiere', 'carosello-articoli' ),
+		'vuoto_titolo'    => __( 'Nessuna fiera in calendario, per ora', 'carosello-articoli' ),
+		'vuoto_testo'     => __( 'Appena fissiamo il prossimo appuntamento lo trovi qui. Nel frattempo siamo sempre a disposizione.', 'carosello-articoli' ),
+		'vuoto_pulsante'  => __( 'Contattaci', 'carosello-articoli' ),
 	);
 }
 
@@ -176,9 +226,14 @@ function cda_sanitize_value( $field, $value ) {
 			$color = sanitize_hex_color( $value );
 			return $color ? $color : $field['default'];
 		case 'tag':
+		case 'category':
 			return implode( ',', array_filter( array_map( 'sanitize_title', explode( ',', (string) $value ) ) ) );
 		case 'text':
 			return sanitize_text_field( $value );
+		case 'textarea':
+			return sanitize_textarea_field( $value );
+		case 'url':
+			return esc_url_raw( trim( (string) $value ) );
 		case 'post_type':
 			$value = sanitize_key( $value );
 			return post_type_exists( $value ) ? $value : $field['default'];
@@ -203,7 +258,7 @@ function cda_sanitize( $input ) {
 	// Impostazioni per lingua salvate quando il traduttore era attivo: restano.
 	$saved = get_option( CDA_OPTION, array() );
 	foreach ( is_array( $saved ) ? $saved : array() as $key => $value ) {
-		if ( ! isset( $clean[ $key ] ) && preg_match( '/^(tag_lingua|testo_link)__[a-z0-9-]+$/', (string) $key ) ) {
+		if ( ! isset( $clean[ $key ] ) && preg_match( '/^(tag_lingua|testo_link|vuoto_[a-z]+)__[a-z0-9-]+$/', (string) $key ) ) {
 			$clean[ $key ] = $value;
 		}
 	}
@@ -271,6 +326,14 @@ function cda_render_field( $args ) {
 			printf( '<input type="text" id="%s" name="%s" value="%s" class="regular-text">', esc_attr( $id ), esc_attr( $name ), esc_attr( $value ) );
 			break;
 
+		case 'textarea':
+			printf( '<textarea id="%s" name="%s" rows="3" class="large-text">%s</textarea>', esc_attr( $id ), esc_attr( $name ), esc_textarea( $value ) );
+			break;
+
+		case 'url':
+			printf( '<input type="url" id="%s" name="%s" value="%s" class="regular-text" placeholder="https://">', esc_attr( $id ), esc_attr( $name ), esc_attr( $value ) );
+			break;
+
 		case 'bool':
 			printf( '<input type="checkbox" id="%s" name="%s" value="1" %s>', esc_attr( $id ), esc_attr( $name ), checked( $value, 1, false ) );
 			break;
@@ -295,6 +358,18 @@ function cda_render_field( $args ) {
 			if ( ! is_wp_error( $tags ) ) {
 				foreach ( $tags as $tag ) {
 					printf( '<option value="%s" %s>%s (%d)</option>', esc_attr( $tag->slug ), selected( $value, $tag->slug, false ), esc_html( $tag->name ), (int) $tag->count );
+				}
+			}
+			echo '</select>';
+			break;
+
+		case 'category':
+			$cats = get_terms( array( 'taxonomy' => 'category', 'hide_empty' => false ) );
+			printf( '<select id="%s" name="%s">', esc_attr( $id ), esc_attr( $name ) );
+			echo '<option value="">— Nessun filtro (tutte le categorie) —</option>';
+			if ( ! is_wp_error( $cats ) ) {
+				foreach ( $cats as $cat ) {
+					printf( '<option value="%s" %s>%s (%d)</option>', esc_attr( $cat->slug ), selected( $value, $cat->slug, false ), esc_html( $cat->name ), (int) $cat->count );
 				}
 			}
 			echo '</select>';
@@ -331,6 +406,7 @@ function cda_render_admin_page() {
 			<p><code>[<?php echo esc_html( CDA_SHORTCODE ); ?>]</code></p>
 			<p>Il carosello usa le impostazioni qui sotto. Per avere più caroselli diversi puoi sovrascrivere qualsiasi impostazione direttamente nello shortcode, ad esempio:</p>
 			<p><code>[<?php echo esc_html( CDA_SHORTCODE ); ?> tag="fiere" altezza="450" desktop="4" autoplay="no"]</code></p>
+			<p><code>[<?php echo esc_html( CDA_SHORTCODE ); ?> categoria="fiere,eventi"]</code></p>
 			<details>
 				<summary style="cursor:pointer"><strong>Elenco di tutti gli attributi dello shortcode</strong></summary>
 				<table class="widefat striped" style="margin-top:10px">
@@ -365,6 +441,15 @@ function cda_render_admin_page() {
 										break;
 									case 'tag':
 										echo 'slug del tag, anche più di uno separati da virgola';
+										break;
+									case 'category':
+										echo 'slug della categoria, anche più di una separate da virgola';
+										break;
+									case 'textarea':
+										echo 'testo libero';
+										break;
+									case 'url':
+										echo 'indirizzo, es. https://www.sito.it/contatti/';
 										break;
 									case 'post_type':
 										echo 'post, page, …';
@@ -460,6 +545,14 @@ function cda_shortcode( $atts ) {
 			'terms'    => explode( ',', $o['tag'] ),
 		);
 	}
+	if ( '' !== $o['categoria'] ) {
+		$tax[] = array(
+			'taxonomy'         => 'category',
+			'field'            => 'slug',
+			'terms'            => explode( ',', $o['categoria'] ),
+			'include_children' => true,
+		);
+	}
 	// Lingua della pagina: anche il tag di lingua (con "Elementor Page Translator").
 	$lingua     = cda_lingua_corrente();
 	$tag_lingua = '' !== $lingua ? (string) ( $o[ 'tag_lingua__' . $lingua ] ?? '' ) : '';
@@ -481,12 +574,7 @@ function cda_shortcode( $atts ) {
 	$posts = get_posts( $query );
 
 	if ( ! $posts ) {
-		return current_user_can( 'edit_posts' )
-			? '<p class="cda-vuoto">' . esc_html( $o['tag']
-				/* translators: %s: tag slug. */
-				? sprintf( __( 'Carosello Articoli: nessun articolo trovato con il tag "%s". (Messaggio visibile solo agli amministratori.)', 'carosello-articoli' ), $o['tag'] )
-				: __( 'Carosello Articoli: nessun articolo trovato. (Messaggio visibile solo agli amministratori.)', 'carosello-articoli' ) ) . '</p>'
-			: '';
+		return cda_render_vuoto( $o, $lingua );
 	}
 
 	wp_enqueue_style( 'cda-carosello' );
@@ -592,6 +680,107 @@ function cda_shortcode( $atts ) {
 				<?php echo $arrows_below ? $arrows : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 			</div>
 		<?php endif; ?>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+
+/**
+ * Nessun articolo da mostrare: biglietto "nessuna fiera" (o nulla, se disattivato).
+ * Agli amministratori una riga in più spiega quale filtro non ha trovato articoli.
+ *
+ * @param array  $o      Impostazioni (con gli attributi dello shortcode).
+ * @param string $lingua Lingua della pagina ('' senza traduttore).
+ */
+function cda_render_vuoto( $o, $lingua ) {
+	$nota = '';
+	if ( current_user_can( 'edit_posts' ) ) {
+		$filtri = array();
+		if ( '' !== $o['tag'] ) {
+			/* translators: %s: tag slug(s). */
+			$filtri[] = sprintf( __( 'tag "%s"', 'carosello-articoli' ), $o['tag'] );
+		}
+		if ( '' !== $o['categoria'] ) {
+			/* translators: %s: category slug(s). */
+			$filtri[] = sprintf( __( 'categoria "%s"', 'carosello-articoli' ), $o['categoria'] );
+		}
+		$nota = '<p class="cda-vuoto">' . esc_html(
+			$filtri
+				/* translators: %s: filters. */
+				? sprintf( __( 'Carosello Articoli: nessun articolo trovato con %s. (Messaggio visibile solo agli amministratori.)', 'carosello-articoli' ), implode( ' + ', $filtri ) )
+				: __( 'Carosello Articoli: nessun articolo trovato. (Messaggio visibile solo agli amministratori.)', 'carosello-articoli' )
+		) . '</p>';
+	}
+	if ( empty( $o['vuoto_mostra'] ) ) {
+		return $nota;
+	}
+
+	// Testi nella lingua della pagina.
+	$altra    = '' !== $lingua && function_exists( 'ept_default_language' ) && ept_default_language() !== $lingua;
+	$default  = cda_defaults();
+	$tradotti = cda_testi_vuoto_tradotti();
+	$t        = array();
+	foreach ( array( 'vuoto_cal', 'vuoto_occhiello', 'vuoto_titolo', 'vuoto_testo', 'vuoto_pulsante' ) as $k ) {
+		$t[ $k ] = trim( (string) $o[ $k ] );
+		if ( $altra ) {
+			$proprio = trim( (string) ( $o[ $k . '__' . $lingua ] ?? '' ) );
+			if ( '' !== $proprio ) {
+				$t[ $k ] = $proprio;
+			} elseif ( $t[ $k ] === $default[ $k ] ) {
+				$t[ $k ] = $tradotti[ $k ];
+			}
+		} elseif ( $t[ $k ] === $default[ $k ] ) {
+			$t[ $k ] = $tradotti[ $k ];
+		}
+	}
+	$link = (string) $o['vuoto_link'];
+	if ( $altra ) {
+		$proprio = (string) ( $o[ 'vuoto_link__' . $lingua ] ?? '' );
+		if ( '' !== $proprio ) {
+			$link = $proprio;
+		} elseif ( '' !== $link && function_exists( 'ept_get_translation_id' ) ) {
+			// Pagina del sito tradotta: la sua traduzione nella lingua della pagina (altrimenti il link resta quello).
+			$id         = url_to_postid( $link );
+			$traduzione = $id ? ept_get_translation_id( $id, $lingua ) : null;
+			if ( $traduzione && 'publish' === get_post_status( $traduzione ) ) {
+				$link = get_permalink( $traduzione );
+			}
+		}
+	}
+
+	wp_enqueue_style( 'cda-carosello' );
+	$style = sprintf(
+		'--cda-h:%dpx;--cda-primary:%s;--cda-dark:%s;--cda-light:%s;--cda-card:%s;--cda-bg:%s;',
+		$o['altezza'], $o['colore_primario'], $o['colore_scuro'], $o['colore_chiaro'], $o['colore_card'], $o['colore_sfondo']
+	);
+	$classes = 'cda-biglietto' . ( 'carosello' === $o['vuoto_altezza'] ? ' cda-biglietto--alto' : '' );
+
+	ob_start();
+	echo $nota; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped above.
+	?>
+	<div class="<?php echo esc_attr( $classes ); ?>" style="<?php echo esc_attr( $style ); ?>" role="region" aria-label="<?php echo esc_attr( '' !== $t['vuoto_titolo'] ? $t['vuoto_titolo'] : $t['vuoto_cal'] ); ?>">
+		<div class="cda-biglietto__card">
+			<div class="cda-biglietto__cal" aria-hidden="true">
+				<?php if ( '' !== $t['vuoto_cal'] ) : ?>
+					<span class="cda-biglietto__cal-testo"><?php echo esc_html( $t['vuoto_cal'] ); ?></span>
+				<?php endif; ?>
+				<span class="cda-biglietto__cal-trattino"></span>
+			</div>
+			<div class="cda-biglietto__corpo">
+				<?php if ( '' !== $t['vuoto_occhiello'] ) : ?>
+					<p class="cda-biglietto__occhiello"><?php echo esc_html( $t['vuoto_occhiello'] ); ?></p>
+				<?php endif; ?>
+				<?php if ( '' !== $t['vuoto_titolo'] ) : ?>
+					<h3 class="cda-biglietto__titolo"><?php echo esc_html( $t['vuoto_titolo'] ); ?></h3>
+				<?php endif; ?>
+				<?php if ( '' !== $t['vuoto_testo'] ) : ?>
+					<p class="cda-biglietto__testo"><?php echo nl2br( esc_html( $t['vuoto_testo'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped. ?></p>
+				<?php endif; ?>
+				<?php if ( '' !== $link && '' !== $t['vuoto_pulsante'] ) : ?>
+					<a class="cda-biglietto__pulsante" href="<?php echo esc_url( $link ); ?>"><?php echo esc_html( $t['vuoto_pulsante'] ); ?></a>
+				<?php endif; ?>
+			</div>
+		</div>
 	</div>
 	<?php
 	return ob_get_clean();

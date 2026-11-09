@@ -1,6 +1,10 @@
 # Carosello Articoli
 
-Carosello di articoli filtrati per tag, da inserire nelle pagine con lo shortcode `[carosello_articoli]`; impostazioni in Bacheca → Carosello Articoli. Con Elementor Page Translator: tag di lingua e testo del link per lingua.
+Carosello di articoli filtrati per tag e/o categoria, da inserire nelle pagine con lo shortcode `[carosello_articoli]`; impostazioni in Bacheca → Carosello Articoli. Con Elementor Page Translator: tag di lingua e testo del link per lingua.
+
+## Nessun articolo da mostrare
+
+Se nessun articolo corrisponde ai filtri, al posto del carosello compare un **biglietto "nessuna fiera in calendario"** (impostazioni → *Nessun articolo da mostrare*): scritta sul calendario, occhiello, titolo, testo, pulsante con link, altezza compatta o uguale al carosello. Con Elementor Page Translator ogni testo ha un campo per lingua (vuoto = testo predefinito tradotto) e il link porta alla traduzione della pagina, se esiste. Disattivandolo non viene mostrato nulla (gli amministratori vedono comunque quale filtro non ha trovato articoli).
 
 ## Installazione
 
