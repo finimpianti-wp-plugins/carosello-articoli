@@ -1,0 +1,42 @@
+/* Carosello Articoli — pannello impostazioni a schede */
+.cda-admin .cda-admin__intro { max-width: 860px; font-size: 14px; }
+.cda-admin .cda-tabs { margin-bottom: 0; }
+.cda-admin .cda-tabs .nav-tab { cursor: pointer; }
+.cda-admin .cda-form { max-width: 1000px; }
+.cda-admin .cda-panel {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-top: 0;
+	padding: 6px 24px 18px;
+}
+.cda-admin .cda-panel[hidden] { display: none; }
+.cda-admin .cda-panel__intro { margin: 16px 0 4px; color: #50575e; max-width: 760px; }
+.cda-admin .cda-panel__gruppo {
+	margin: 22px 0 0;
+	padding-top: 16px;
+	border-top: 1px solid #f0f0f1;
+	font-size: 14px;
+}
+.cda-admin .cda-panel .form-table th { width: 260px; }
+.cda-admin .cda-attributi { margin: 12px 0 8px; }
+.cda-admin .cda-attributi td:first-child { white-space: nowrap; }
+.cda-admin .cda-salva {
+	position: sticky;
+	bottom: 0;
+	z-index: 10;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	margin-top: 16px;
+	padding: 12px 24px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	box-shadow: 0 -4px 12px rgba(0, 0, 0, .06);
+}
+.cda-admin .cda-salva__nota { color: #646970; }
+@media (max-width: 782px) {
+	.cda-admin .cda-panel { padding: 4px 12px 14px; }
+	.cda-admin .cda-panel .form-table th { width: auto; }
+	.cda-admin .cda-tabs .nav-tab { margin-bottom: 4px; }
+}

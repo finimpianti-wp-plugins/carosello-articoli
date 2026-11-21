@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Carosello Articoli
  * Description:       Carosello di articoli filtrati per tag e categoria, da inserire nelle pagine con lo shortcode [carosello_articoli]. Impostazioni in Bacheca → Carosello Articoli.
- * Version:           1.4.0
+ * Version:           1.5.0
  * Domain Path:       /languages
  * Requires at least: 5.8
  * Requires PHP:      7.4
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'CDA_VERSION', '1.4.0' );
+define( 'CDA_VERSION', '1.5.0' );
 define( 'CDA_URL', plugin_dir_url( __FILE__ ) );
 define( 'CDA_OPTION', 'cda_impostazioni' );
 define( 'CDA_SHORTCODE', 'carosello_articoli' );
@@ -30,33 +30,34 @@ function cda_fields() {
 	return array(
 		'contenuto'   => array(
 			'title'  => 'Contenuto',
+			'intro'  => 'Quali articoli mostrare e in che ordine (dal più recente).',
 			'fields' => array(
 				'tag'          => array( 'type' => 'tag', 'label' => 'Tag degli articoli', 'default' => '', 'desc' => 'Vengono mostrati solo gli articoli con questo tag. Vuoto = tutti. Nello shortcode puoi indicare più tag separati da virgola.' ),
 				'categoria'    => array( 'type' => 'category', 'label' => 'Categoria degli articoli', 'default' => '', 'desc' => 'Vengono mostrati solo gli articoli di questa categoria (comprese le sue sottocategorie). Vuoto = tutte. Con tag e categoria insieme, gli articoli devono avere entrambi. Nello shortcode puoi indicare più categorie separate da virgola (basta che l\'articolo sia in una).' ),
 				'post_type'    => array( 'type' => 'post_type', 'label' => 'Tipo di contenuto', 'default' => 'post' ),
 				'numero'       => array( 'type' => 'int', 'label' => 'Numero massimo di articoli', 'default' => 10, 'min' => 1, 'max' => 50 ),
-				'righe'        => array( 'type' => 'int', 'label' => 'Righe massime della descrizione', 'default' => 3, 'min' => 1, 'max' => 6 ),
 				'nuova_scheda' => array( 'type' => 'bool', 'label' => 'Apri gli articoli in una nuova scheda', 'default' => 1 ),
 			),
 		),
-		'layout'      => array(
-			'title'  => 'Dimensioni e layout',
+		'testo'       => array(
+			'title'  => 'Testo delle card',
+			'intro'  => 'Cosa scrivere sotto il titolo di ogni card. Per un articolo puoi scrivere il testo esatto nel riquadro "Carosello Articoli – testo nella card" della sua pagina di modifica.',
 			'fields' => array(
-				'altezza'         => array( 'type' => 'int', 'label' => 'Altezza del carosello', 'default' => 500, 'min' => 200, 'max' => 1200, 'unit' => 'px' ),
-				'img_altezza'     => array( 'type' => 'int', 'label' => 'Altezza immagine nella card', 'default' => 55, 'min' => 25, 'max' => 80, 'unit' => '%', 'desc' => 'Percentuale dell\'altezza della card occupata dall\'immagine.' ),
-				'img_adattamento' => array( 'type' => 'select', 'label' => 'Adattamento immagine', 'default' => 'cover', 'options' => array( 'cover' => 'Riempi la card (ritaglia i bordi)', 'contain' => 'Mostra l\'immagine intera' ) ),
-				'desktop'         => array( 'type' => 'int', 'label' => 'Card visibili su desktop', 'default' => 3, 'min' => 1, 'max' => 6 ),
-				'tablet'          => array( 'type' => 'int', 'label' => 'Card visibili su tablet', 'default' => 2, 'min' => 1, 'max' => 6 ),
-				'mobile'          => array( 'type' => 'int', 'label' => 'Card visibili su mobile', 'default' => 1, 'min' => 1, 'max' => 6 ),
-				'bp_tablet'       => array( 'type' => 'int', 'label' => 'Larghezza massima tablet', 'default' => 1024, 'min' => 600, 'max' => 1920, 'unit' => 'px', 'desc' => 'Sotto questa larghezza dello schermo si usa il numero di card "tablet" (1024 = come Elementor).' ),
-				'bp_mobile'       => array( 'type' => 'int', 'label' => 'Larghezza massima mobile', 'default' => 767, 'min' => 320, 'max' => 1200, 'unit' => 'px', 'desc' => 'Sotto questa larghezza si usa il numero di card "mobile" (767 = come Elementor).' ),
-				'gap'             => array( 'type' => 'int', 'label' => 'Spazio tra le card', 'default' => 24, 'min' => 0, 'max' => 80, 'unit' => 'px' ),
-				'anteprima'       => array( 'type' => 'int', 'label' => 'Anteprima card laterali', 'default' => 60, 'min' => 0, 'max' => 200, 'unit' => 'px', 'desc' => 'Porzione visibile delle card precedente e successiva ai lati (ridotta automaticamente su schermi piccoli).' ),
-				'sfumatura'       => array( 'type' => 'bool', 'label' => 'Sfuma le card laterali', 'default' => 1 ),
+				'testo_fonte' => array( 'type' => 'select', 'label' => 'Testo sotto il titolo', 'default' => 'auto', 'options' => array(
+					'auto'      => 'Testo scritto per la card, altrimenti il Riassunto, altrimenti l\'inizio dell\'articolo',
+					'riassunto' => 'Solo il testo scritto per la card o il Riassunto (se mancano, nessun testo)',
+					'nessuno'   => 'Nessun testo (solo il titolo)',
+				) ),
+				'testo_blocchi' => array( 'type' => 'select', 'label' => 'Testo preso dall\'articolo', 'default' => 'a_capo', 'options' => array(
+					'a_capo'   => 'Ogni parte su una riga (titoletti, date, luogo…)',
+					'in_linea' => 'Tutto su una riga, parti separate da " · "',
+				), 'desc' => 'Vale quando il testo viene preso dall\'articolo: il titolo ripetuto viene tolto e le etichette brevi si uniscono al loro valore ("Date: 10 – 14 November 2026").' ),
+				'parole'      => array( 'type' => 'int', 'label' => 'Parole massime (testo preso dall\'articolo)', 'default' => 30, 'min' => 5, 'max' => 120 ),
+				'righe'       => array( 'type' => 'int', 'label' => 'Righe massime mostrate', 'default' => 3, 'min' => 1, 'max' => 8, 'desc' => 'Oltre questo numero di righe il testo viene troncato con "…". Vale per tutti i testi.' ),
 			),
 		),
 		'stile'       => array(
-			'title'  => 'Stile card',
+			'title'  => 'Aspetto',
 			'fields' => array(
 				'stile_card' => array( 'type' => 'select', 'label' => 'Stile delle card', 'default' => 'base', 'options' => array(
 					'base'        => 'Base – card bianca, diventa verde al passaggio del mouse',
@@ -65,26 +66,48 @@ function cda_fields() {
 					'sovrapposta' => 'Sovrapposta – testo sopra l\'immagine',
 					'minimal'     => 'Minimal – senza card, immagine arrotondata e testo libero',
 				) ),
-				'testo_link' => array( 'type' => 'text', 'label' => 'Testo del link', 'default' => 'Scopri di più', 'desc' => 'Usato negli stili Cornice, Scura e Minimal.' ),
+				'testo_link'      => array( 'type' => 'text', 'label' => 'Testo del link', 'default' => 'Scopri di più', 'desc' => 'Usato negli stili Cornice, Scura e Minimal.' ),
+				'img_altezza'     => array( 'type' => 'int', 'label' => 'Altezza immagine nella card', 'default' => 55, 'min' => 25, 'max' => 80, 'unit' => '%', 'desc' => 'Percentuale dell\'altezza della card occupata dall\'immagine.' ),
+				'img_adattamento' => array( 'type' => 'select', 'label' => 'Adattamento immagine', 'default' => 'cover', 'options' => array( 'cover' => 'Riempi la card (ritaglia i bordi)', 'contain' => 'Mostra l\'immagine intera' ) ),
+			),
+		),
+		'layout'      => array(
+			'title'  => 'Dimensioni',
+			'fields' => array(
+				'altezza'   => array( 'type' => 'int', 'label' => 'Altezza del carosello', 'default' => 500, 'min' => 200, 'max' => 1200, 'unit' => 'px' ),
+				'desktop'   => array( 'type' => 'int', 'label' => 'Card visibili su desktop', 'default' => 3, 'min' => 1, 'max' => 6, 'gruppo' => 'Card visibili' ),
+				'tablet'    => array( 'type' => 'int', 'label' => 'Card visibili su tablet', 'default' => 2, 'min' => 1, 'max' => 6 ),
+				'mobile'    => array( 'type' => 'int', 'label' => 'Card visibili su mobile', 'default' => 1, 'min' => 1, 'max' => 6 ),
+				'bp_tablet' => array( 'type' => 'int', 'label' => 'Larghezza massima tablet', 'default' => 1024, 'min' => 600, 'max' => 1920, 'unit' => 'px', 'desc' => 'Sotto questa larghezza dello schermo si usa il numero di card "tablet" (1024 = come Elementor).' ),
+				'bp_mobile' => array( 'type' => 'int', 'label' => 'Larghezza massima mobile', 'default' => 767, 'min' => 320, 'max' => 1200, 'unit' => 'px', 'desc' => 'Sotto questa larghezza si usa il numero di card "mobile" (767 = come Elementor).' ),
+				'gap'       => array( 'type' => 'int', 'label' => 'Spazio tra le card', 'default' => 24, 'min' => 0, 'max' => 80, 'unit' => 'px', 'gruppo' => 'Spazi e bordi' ),
+				'anteprima' => array( 'type' => 'int', 'label' => 'Anteprima card laterali', 'default' => 60, 'min' => 0, 'max' => 200, 'unit' => 'px', 'desc' => 'Porzione visibile delle card precedente e successiva ai lati (ridotta automaticamente su schermi piccoli).' ),
+				'sfumatura' => array( 'type' => 'bool', 'label' => 'Sfuma le card laterali', 'default' => 1 ),
 			),
 		),
 		'navigazione' => array(
-			'title'  => 'Navigazione',
+			'title'  => 'Navigazione e scorrimento',
 			'fields' => array(
-				'frecce'           => array( 'type' => 'bool', 'label' => 'Mostra le frecce', 'default' => 1 ),
+				'frecce'           => array( 'type' => 'bool', 'label' => 'Mostra le frecce', 'default' => 1, 'gruppo' => 'Comandi' ),
 				'frecce_posizione' => array( 'type' => 'select', 'label' => 'Posizione frecce', 'default' => 'laterali', 'options' => array( 'laterali' => 'Ai lati del carosello', 'sotto' => 'Sotto, a destra' ) ),
 				'pallini'          => array( 'type' => 'bool', 'label' => 'Mostra i pallini', 'default' => 1 ),
 				'trascinamento'    => array( 'type' => 'bool', 'label' => 'Scorrimento con trascinamento (mouse e touch)', 'default' => 1 ),
 				'loop'             => array( 'type' => 'bool', 'label' => 'Scorrimento infinito', 'default' => 1 ),
+				'autoplay'         => array( 'type' => 'bool', 'label' => 'Attiva lo scorrimento automatico', 'default' => 1, 'gruppo' => 'Scorrimento automatico' ),
+				'intervallo'       => array( 'type' => 'int', 'label' => 'Intervallo tra uno scorrimento e l\'altro', 'default' => 4000, 'min' => 1000, 'max' => 30000, 'unit' => 'ms', 'desc' => '1000 ms = 1 secondo.' ),
+				'velocita'         => array( 'type' => 'int', 'label' => 'Durata dell\'animazione', 'default' => 500, 'min' => 100, 'max' => 3000, 'unit' => 'ms' ),
+				'pausa_hover'      => array( 'type' => 'bool', 'label' => 'Metti in pausa al passaggio del mouse', 'default' => 1 ),
 			),
 		),
-		'autoplay'    => array(
-			'title'  => 'Scorrimento automatico',
+		'colori'      => array(
+			'title'  => 'Colori',
 			'fields' => array(
-				'autoplay'    => array( 'type' => 'bool', 'label' => 'Attiva lo scorrimento automatico', 'default' => 1 ),
-				'intervallo'  => array( 'type' => 'int', 'label' => 'Intervallo tra uno scorrimento e l\'altro', 'default' => 4000, 'min' => 1000, 'max' => 30000, 'unit' => 'ms', 'desc' => '1000 ms = 1 secondo.' ),
-				'velocita'    => array( 'type' => 'int', 'label' => 'Durata dell\'animazione', 'default' => 500, 'min' => 100, 'max' => 3000, 'unit' => 'ms' ),
-				'pausa_hover' => array( 'type' => 'bool', 'label' => 'Metti in pausa al passaggio del mouse', 'default' => 1 ),
+				'colore_primario' => array( 'type' => 'color', 'label' => 'Primario (hover card, pallino attivo)', 'default' => '#06A34A' ),
+				'colore_scuro'    => array( 'type' => 'color', 'label' => 'Scuro (testi, frecce)', 'default' => '#012611' ),
+				'colore_medio'    => array( 'type' => 'color', 'label' => 'Medio (hover pallini)', 'default' => '#6BBF89' ),
+				'colore_chiaro'   => array( 'type' => 'color', 'label' => 'Chiaro (pallini, sfondo immagini)', 'default' => '#ADD9C0' ),
+				'colore_card'     => array( 'type' => 'color', 'label' => 'Sfondo card', 'default' => '#FFFFFF' ),
+				'colore_sfondo'   => array( 'type' => 'color', 'label' => 'Sfondo del carosello', 'default' => '#E5E5E5' ),
 			),
 		),
 		'vuoto'       => array(
@@ -101,17 +124,6 @@ function cda_fields() {
 			),
 		),
 		'lingue'      => cda_campi_lingue(),
-		'colori'      => array(
-			'title'  => 'Colori',
-			'fields' => array(
-				'colore_primario' => array( 'type' => 'color', 'label' => 'Primario (hover card, pallino attivo)', 'default' => '#06A34A' ),
-				'colore_scuro'    => array( 'type' => 'color', 'label' => 'Scuro (testi, frecce)', 'default' => '#012611' ),
-				'colore_medio'    => array( 'type' => 'color', 'label' => 'Medio (hover pallini)', 'default' => '#6BBF89' ),
-				'colore_chiaro'   => array( 'type' => 'color', 'label' => 'Chiaro (pallini, sfondo immagini)', 'default' => '#ADD9C0' ),
-				'colore_card'     => array( 'type' => 'color', 'label' => 'Sfondo card', 'default' => '#FFFFFF' ),
-				'colore_sfondo'   => array( 'type' => 'color', 'label' => 'Sfondo del carosello', 'default' => '#E5E5E5' ),
-			),
-		),
 	);
 }
 
@@ -279,20 +291,6 @@ add_action( 'admin_init', function () {
 		'sanitize_callback' => 'cda_sanitize',
 		'default'           => cda_defaults(),
 	) );
-
-	foreach ( cda_fields() as $section_id => $section ) {
-		if ( ! $section['fields'] ) {
-			continue;
-		}
-		add_settings_section( 'cda_' . $section_id, $section['title'], '__return_false', 'carosello-articoli' );
-		foreach ( $section['fields'] as $key => $field ) {
-			add_settings_field( 'cda_' . $key, $field['label'], 'cda_render_field', 'carosello-articoli', 'cda_' . $section_id, array(
-				'key'       => $key,
-				'field'     => $field,
-				'label_for' => 'cda_' . $key,
-			) );
-		}
-	}
 } );
 
 add_action( 'admin_enqueue_scripts', function ( $hook ) {
@@ -302,6 +300,8 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 	wp_enqueue_style( 'wp-color-picker' );
 	wp_enqueue_script( 'wp-color-picker' );
 	wp_add_inline_script( 'wp-color-picker', 'jQuery(function($){$(".cda-color").wpColorPicker();});' );
+	wp_enqueue_style( 'cda-admin', CDA_URL . 'assets/admin.css', array(), CDA_VERSION );
+	wp_enqueue_script( 'cda-admin', CDA_URL . 'assets/admin.js', array(), CDA_VERSION, true );
 } );
 
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), function ( $links ) {
@@ -392,88 +392,100 @@ function cda_render_field( $args ) {
 	}
 }
 
+/** Riga di un campo nella tabella della scheda. */
+function cda_render_row( $key, $field ) {
+	echo '<tr><th scope="row"><label for="' . esc_attr( 'cda_' . $key ) . '">' . esc_html( $field['label'] ) . '</label></th><td>';
+	cda_render_field( array( 'key' => $key, 'field' => $field ) );
+	echo '</td></tr>';
+}
+
+/** Valori ammessi di un attributo dello shortcode, per la scheda "Shortcode". */
+function cda_valori_attributo( $field ) {
+	switch ( $field['type'] ) {
+		case 'bool':
+			return 'si / no';
+		case 'int':
+			return $field['min'] . '–' . $field['max'] . ( isset( $field['unit'] ) ? ' ' . $field['unit'] : '' );
+		case 'select':
+			return implode( ' / ', array_keys( $field['options'] ) );
+		case 'color':
+			return 'colore esadecimale, es. #06A34A';
+		case 'tag':
+			return 'slug del tag, anche più di uno separati da virgola';
+		case 'category':
+			return 'slug della categoria, anche più di una separate da virgola';
+		case 'url':
+			return 'indirizzo, es. https://www.sito.it/contatti/';
+		case 'post_type':
+			return 'post, page, …';
+	}
+	return 'testo libero';
+}
+
 function cda_render_admin_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
+	$sezioni = array_filter( cda_fields(), static function ( $s ) {
+		return ! empty( $s['fields'] );
+	} );
 	?>
-	<div class="wrap">
+	<div class="wrap cda-admin">
 		<h1>Carosello Articoli</h1>
+		<p class="cda-admin__intro">Inserisci il carosello nelle pagine con lo shortcode <code>[<?php echo esc_html( CDA_SHORTCODE ); ?>]</code> (in Elementor: widget <strong>Shortcode</strong>). Le impostazioni qui sotto valgono per tutti i caroselli; ogni shortcode può cambiarle (scheda <em>Shortcode</em>).</p>
+		<?php settings_errors(); ?>
 
-		<div class="card" style="max-width:860px">
-			<h2>Come si usa</h2>
-			<p>Inserisci nella pagina (in Elementor con il widget <strong>Shortcode</strong>) il codice:</p>
-			<p><code>[<?php echo esc_html( CDA_SHORTCODE ); ?>]</code></p>
-			<p>Il carosello usa le impostazioni qui sotto. Per avere più caroselli diversi puoi sovrascrivere qualsiasi impostazione direttamente nello shortcode, ad esempio:</p>
-			<p><code>[<?php echo esc_html( CDA_SHORTCODE ); ?> tag="fiere" altezza="450" desktop="4" autoplay="no"]</code></p>
-			<p><code>[<?php echo esc_html( CDA_SHORTCODE ); ?> categoria="fiere,eventi"]</code></p>
-			<details>
-				<summary style="cursor:pointer"><strong>Elenco di tutti gli attributi dello shortcode</strong></summary>
-				<table class="widefat striped" style="margin-top:10px">
+		<nav class="nav-tab-wrapper cda-tabs" role="tablist">
+			<?php foreach ( $sezioni as $id => $sezione ) : ?>
+				<a href="#<?php echo esc_attr( $id ); ?>" class="nav-tab" role="tab" data-cda-tab="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $sezione['title'] ); ?></a>
+			<?php endforeach; ?>
+			<a href="#shortcode" class="nav-tab" role="tab" data-cda-tab="shortcode">Shortcode</a>
+		</nav>
+
+		<form method="post" action="options.php" class="cda-form">
+			<?php settings_fields( 'cda_group' ); ?>
+			<?php foreach ( $sezioni as $id => $sezione ) : ?>
+				<section class="cda-panel" id="cda-panel-<?php echo esc_attr( $id ); ?>" data-cda-panel="<?php echo esc_attr( $id ); ?>" role="tabpanel">
+					<?php if ( ! empty( $sezione['intro'] ) ) : ?>
+						<p class="cda-panel__intro"><?php echo esc_html( $sezione['intro'] ); ?></p>
+					<?php endif; ?>
+					<table class="form-table" role="presentation"><tbody>
+						<?php foreach ( $sezione['fields'] as $key => $field ) : ?>
+							<?php if ( ! empty( $field['gruppo'] ) ) : ?>
+								</tbody></table><h3 class="cda-panel__gruppo"><?php echo esc_html( $field['gruppo'] ); ?></h3><table class="form-table" role="presentation"><tbody>
+							<?php endif; ?>
+							<?php cda_render_row( $key, $field ); ?>
+						<?php endforeach; ?>
+					</tbody></table>
+				</section>
+			<?php endforeach; ?>
+
+			<section class="cda-panel" id="cda-panel-shortcode" data-cda-panel="shortcode" role="tabpanel">
+				<p class="cda-panel__intro">Per avere più caroselli diversi, scrivi nello shortcode solo le impostazioni che cambiano. Esempi:</p>
+				<p><code>[<?php echo esc_html( CDA_SHORTCODE ); ?> tag="fiere" altezza="450" desktop="4" autoplay="no"]</code></p>
+				<p><code>[<?php echo esc_html( CDA_SHORTCODE ); ?> categoria="fiere,eventi" testo_fonte="riassunto"]</code></p>
+				<table class="widefat striped cda-attributi">
 					<thead><tr><th>Attributo</th><th>Impostazione</th><th>Valori</th></tr></thead>
 					<tbody>
-					<?php foreach ( cda_flat_fields() as $key => $field ) : ?>
-						<?php
-						if ( ! empty( $field['lingua'] ) ) {
-							continue;
-						}
-						?>
-						<tr>
-							<td><code><?php echo esc_html( $key ); ?></code></td>
-							<td><?php echo esc_html( $field['label'] ); ?></td>
-							<td>
-								<?php
-								switch ( $field['type'] ) {
-									case 'bool':
-										echo 'si / no';
-										break;
-									case 'int':
-										echo esc_html( $field['min'] . '–' . $field['max'] . ( isset( $field['unit'] ) ? ' ' . $field['unit'] : '' ) );
-										break;
-									case 'select':
-										echo esc_html( implode( ' / ', array_keys( $field['options'] ) ) );
-										break;
-									case 'color':
-										echo 'colore esadecimale, es. #06A34A';
-										break;
-									case 'text':
-										echo 'testo libero';
-										break;
-									case 'tag':
-										echo 'slug del tag, anche più di uno separati da virgola';
-										break;
-									case 'category':
-										echo 'slug della categoria, anche più di una separate da virgola';
-										break;
-									case 'textarea':
-										echo 'testo libero';
-										break;
-									case 'url':
-										echo 'indirizzo, es. https://www.sito.it/contatti/';
-										break;
-									case 'post_type':
-										echo 'post, page, …';
-										break;
-								}
-								?>
-							</td>
-						</tr>
+					<?php foreach ( $sezioni as $sezione ) : ?>
+						<?php foreach ( $sezione['fields'] as $key => $field ) : ?>
+							<?php
+							if ( ! empty( $field['lingua'] ) ) {
+								continue;
+							}
+							?>
+							<tr><td><code><?php echo esc_html( $key ); ?></code></td><td><?php echo esc_html( $field['label'] ); ?></td><td><?php echo esc_html( cda_valori_attributo( $field ) ); ?></td></tr>
+						<?php endforeach; ?>
 					<?php endforeach; ?>
 					</tbody>
 				</table>
-			</details>
-		</div>
+			</section>
 
-		<form method="post" action="options.php">
-			<?php
-			settings_fields( 'cda_group' );
-			do_settings_sections( 'carosello-articoli' );
-			?>
-			<p class="submit">
+			<div class="cda-salva">
 				<?php submit_button( 'Salva impostazioni', 'primary', 'submit', false ); ?>
-				&nbsp;
 				<?php submit_button( 'Ripristina predefiniti', 'secondary', 'cda_reset', false, array( 'onclick' => "return confirm('Ripristinare tutte le impostazioni ai valori predefiniti?');" ) ); ?>
-			</p>
+				<span class="cda-salva__nota">Le impostazioni di tutte le schede vengono salvate insieme.</span>
+			</div>
 		</form>
 	</div>
 	<?php
@@ -637,8 +649,7 @@ function cda_shortcode( $atts ) {
 				<div class="cda__track">
 					<?php foreach ( $posts as $p ) : ?>
 						<?php
-						$excerpt = has_excerpt( $p ) ? $p->post_excerpt : strip_shortcodes( $p->post_content );
-						$excerpt = wp_trim_words( wp_strip_all_tags( $excerpt ), 35, '…' );
+						$excerpt = cda_testo_card( $p, $o );
 						?>
 						<div class="cda__slide">
 							<a class="cda__card" href="<?php echo esc_url( get_permalink( $p ) ); ?>"<?php echo $target; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
@@ -659,7 +670,7 @@ function cda_shortcode( $atts ) {
 								<div class="cda__body">
 									<h3 class="cda__title"><?php echo esc_html( get_the_title( $p ) ); ?></h3>
 									<?php if ( $excerpt ) : ?>
-										<p class="cda__excerpt"><?php echo esc_html( $excerpt ); ?></p>
+										<p class="cda__excerpt"><?php echo esc_html( $excerpt ); // a capo resi dal CSS (white-space: pre-line). ?></p>
 									<?php endif; ?>
 									<?php if ( '' !== $o['testo_link'] ) : ?>
 										<span class="cda__more"><span class="cda__more-text"><?php echo esc_html( $o['testo_link'] ); ?></span><span class="cda__more-icon"><?php echo $more_icon; // phpcs:ignore WordPress.Security.EscapeOutput ?></span></span>
@@ -684,6 +695,134 @@ function cda_shortcode( $atts ) {
 	<?php
 	return ob_get_clean();
 }
+
+/* -------------------------------------------------------------------------
+ * Testo delle card
+ * ---------------------------------------------------------------------- */
+
+/** Meta dell'articolo con il testo scritto apposta per la card. */
+const CDA_META_TESTO = '_cda_testo_card';
+
+/**
+ * Testo sotto il titolo di una card: testo scritto per la card, poi il Riassunto, poi (se
+ * consentito) l'inizio dell'articolo ripulito. Testo semplice con a capo ("\n").
+ *
+ * @param WP_Post $p Articolo.
+ * @param array   $o Impostazioni.
+ */
+function cda_testo_card( $p, $o ) {
+	if ( 'nessuno' === $o['testo_fonte'] ) {
+		return '';
+	}
+	$proprio = trim( (string) get_post_meta( $p->ID, CDA_META_TESTO, true ) );
+	if ( '' !== $proprio ) {
+		return $proprio;
+	}
+	if ( has_excerpt( $p ) ) {
+		return trim( wp_strip_all_tags( $p->post_excerpt ) );
+	}
+	if ( 'riassunto' === $o['testo_fonte'] ) {
+		return '';
+	}
+	return cda_testo_da_contenuto( (string) $p->post_content, get_the_title( $p ), (int) $o['parole'], 'in_linea' === $o['testo_blocchi'] ? ' · ' : "\n" );
+}
+
+/**
+ * Testo leggibile dall'HTML di un articolo (anche costruito con Elementor): ogni blocco
+ * (titoli, paragrafi, voci, box) su una riga, senza il titolo ripetuto, etichette brevi unite
+ * al valore che segue ("Date" + "10 – 14 November" → "Date: 10 – 14 November"), al massimo
+ * $parole parole.
+ *
+ * @param string $html      Contenuto.
+ * @param string $titolo    Titolo dell'articolo.
+ * @param int    $parole    Parole massime.
+ * @param string $separatore "\n" oppure " · ".
+ */
+function cda_testo_da_contenuto( $html, $titolo, $parole, $separatore ) {
+	$html = strip_shortcodes( $html );
+	// Parti che non sono testo da leggere.
+	$html = preg_replace( '#<(script|style|noscript|svg|iframe|figure|button|form|select|template)\b[^>]*>.*?</\1>#is', ' ', $html );
+	$html = preg_replace( '#<a\b[^>]*class="[^"]*button[^"]*"[^>]*>.*?</a>#is', ' ', $html ); // pulsanti (es. "Sito ufficiale →")
+	// Ogni blocco va a capo.
+	$html = preg_replace( '#<br\s*/?>|</?(p|div|h[1-6]|li|ul|ol|dl|dt|dd|section|article|header|footer|aside|blockquote|figcaption|table|tr|td|th|pre|hr|address)\b[^>]*>#i', "\n", $html );
+	$testo = html_entity_decode( wp_strip_all_tags( $html ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+	$norm   = static function ( $t ) {
+		return trim( preg_replace( '/\s+/u', ' ', mb_strtolower( $t ) ) );
+	};
+	$titolo = $norm( wp_strip_all_tags( (string) $titolo ) );
+	$righe  = array();
+	foreach ( preg_split( '/\R/u', $testo ) as $riga ) {
+		$riga = trim( preg_replace( '/[ \t\x{00A0}]+/u', ' ', $riga ) );
+		if ( '' === $riga || $norm( $riga ) === $titolo || ( $righe && $norm( end( $righe ) ) === $norm( $riga ) ) ) {
+			continue;
+		}
+		$righe[] = $riga;
+	}
+
+	// Etichette brevi ("Date", "Venue", "Luogo") unite al valore che segue.
+	$unite = array();
+	$n     = count( $righe );
+	for ( $i = 0; $i < $n; $i++ ) {
+		$riga       = $righe[ $i ];
+		$etichetta  = mb_strlen( $riga ) <= 18 && preg_match( '/^[\p{L}][\p{L} \'’]*$/u', $riga ) && count( preg_split( '/\s+/u', $riga ) ) <= 2;
+		if ( $etichetta && $i + 1 < $n ) {
+			$unite[] = $riga . ': ' . $righe[ ++$i ];
+			continue;
+		}
+		$unite[] = $riga;
+	}
+
+	// Al massimo $parole parole, senza perdere gli a capo.
+	$out    = array();
+	$contate = 0;
+	foreach ( $unite as $riga ) {
+		$parole_riga = preg_split( '/\s+/u', $riga );
+		if ( $contate + count( $parole_riga ) > $parole ) {
+			$resto = $parole - $contate;
+			if ( $resto > 0 ) {
+				$out[] = implode( ' ', array_slice( $parole_riga, 0, $resto ) ) . '…';
+			} elseif ( $out ) {
+				$out[ count( $out ) - 1 ] .= '…';
+			}
+			break;
+		}
+		$out[]    = $riga;
+		$contate += count( $parole_riga );
+	}
+	return implode( $separatore, $out );
+}
+
+/* Riquadro "Carosello Articoli – testo nella card" nella modifica degli articoli. */
+add_action( 'add_meta_boxes', function ( $post_type ) {
+	$tipi = array_unique( array( 'post', (string) cda_get_options()['post_type'] ) );
+	if ( in_array( $post_type, $tipi, true ) ) {
+		add_meta_box( 'cda_testo_card', 'Carosello Articoli – testo nella card', 'cda_box_testo_card', $post_type, 'side', 'default' );
+	}
+} );
+
+function cda_box_testo_card( $post ) {
+	wp_nonce_field( 'cda_testo_card', 'cda_testo_card_nonce' );
+	$valore = (string) get_post_meta( $post->ID, CDA_META_TESTO, true );
+	echo '<p>Il testo mostrato sotto il titolo nella card del carosello. Ogni riga va a capo anche nella card. Vuoto = il <strong>Riassunto</strong> dell\'articolo, altrimenti l\'inizio del testo.</p>';
+	echo '<textarea name="cda_testo_card" rows="5" class="widefat" placeholder="Es.&#10;10 – 14 novembre 2026&#10;BolognaFiere, Bologna – Pad. 25, stand B12">' . esc_textarea( $valore ) . '</textarea>';
+}
+
+add_action( 'save_post', function ( $post_id ) {
+	if ( ! isset( $_POST['cda_testo_card_nonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['cda_testo_card_nonce'] ) ), 'cda_testo_card' ) ) {
+		return;
+	}
+	if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || ! current_user_can( 'edit_post', $post_id ) ) {
+		return;
+	}
+	$valore = isset( $_POST['cda_testo_card'] ) ? sanitize_textarea_field( wp_unslash( $_POST['cda_testo_card'] ) ) : '';
+	$valore = str_replace( array( "\r\n", "\r" ), "\n", $valore );
+	if ( '' === trim( $valore ) ) {
+		delete_post_meta( $post_id, CDA_META_TESTO );
+	} else {
+		update_post_meta( $post_id, CDA_META_TESTO, $valore );
+	}
+} );
 
 /**
  * Nessun articolo da mostrare: biglietto "nessuna fiera" (o nulla, se disattivato).
